@@ -1,0 +1,96 @@
+---
+- name: "Installing Load Balancer on Red7"
+  hosts: 192.168.35.43
+  user: ansible
+  become: yes
+  tasks:
+    - name: install haproxy
+      yum: 
+        name: haproxy
+        state: present
+    - name: backup original configuration file
+      shell: mv /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.orig
+
+    - name: Add a new HAProxy configuration
+      become: yes
+      copy: 
+        src: /home/ansible/Ansible/haproxy.cfg
+        dest: /etc/haproxy/haproxy.cfg
+    
+    - name: Uncomment lines to enable the UDP connection
+      lineinfile:
+        path: "/etc/rsyslog.conf"
+        regexp: '^#$ModLoad imudp'
+        line: '$ModLoad imudp'
+
+    - name: Uncomment lines to enable the UDP connection
+      lineinfile:
+        path: "/etc/rsyslog.conf"
+        regexp: '^#$UDPServerRun 514'
+        line: '$UDPServerRun 514'
+        
+    - name: Create a new haproxy configuration file for rsyslog    
+      shell: touch /etc/rsyslog.d/haproxy.conf
+
+    - name: adding configuration file for rsyslog
+      lineinfile: 
+        path: "/etc/rsyslog.d/haproxy.conf"
+        line: '"local2.=info     /var/log/haproxy-access.log    #For Access Log","local2.notice    /var/log/haproxy-info.log      #For Service Info - Backend, loadbalancer"'
+
+    - name: enable port 80/tcp
+      firewalld:
+        zone: public
+        port: 80/tcp
+        permanent: true
+        state: enabled
+      become: yes
+
+    - name: enable port 80/udp
+      firewalld:
+        zone: public
+        port: 80/udp
+        permanent: true
+        state: enabled
+      become: yes  
+
+    - name: enable port 8080/tcp
+      firewalld:
+        zone: public
+        port: 8080/tcp
+        permanent: true
+        state: enabled
+      become: yes  
+
+    - name: enable port 8080/udp
+      firewalld:
+        zone: public
+        port: 8080/udp
+        permanent: true
+        state: enabled
+      become: yes
+
+    - name: reload firewall-cmd
+      ansible.builtin.service:
+        name: firewalld
+        state: reloaded
+
+    - name: Restart service rsyslog, in all cases
+      ansible.builtin.service:
+        name: rsyslog
+        state: restarted
+
+    - name: Enable service haproxy, in all cases
+      ansible.builtin.service:
+        name: haproxy
+        enabled: yes    
+
+    - name: Start service haproxy, in all cases
+      ansible.builtin.service:
+        name: haproxy
+        state: started
+    
+    
+
+
+
+

@@ -1,0 +1,36 @@
+---
+- name: "Installing apache webserver to webservers"
+  hosts: webservers
+  user: ansible
+  become: yes
+  tasks:
+    - name: install apache
+      yum: 
+        name: httpd
+        state: present
+
+    - name: Copy a "webcontent" folder on the remote machines 
+      become: yes
+      copy: 
+        src: /home/ansible/Ansible/webcontent/
+        dest: /var/www/html/
+            
+
+    - name: Add firewall rule
+      firewalld: 
+        state: enabled
+        service: http
+        permanent: yes
+      
+    
+    - name: Start and enable a service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    
+
+
+    
+

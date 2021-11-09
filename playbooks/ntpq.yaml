@@ -1,0 +1,10 @@
+---
+
+- name: ntpq command install
+  hosts: ntpservers, ns, ftp, nfs, db, webservers, lb, nagios, ldap, jenkins, kube_master, kube_worker
+  become: yes
+  tasks:
+    - name: install command
+      yum:
+        name: ntp
+        state: latest

@@ -1,0 +1,58 @@
+---
+- name: "Chrony server installation"
+  hosts: ntpservers
+  become: yes 
+  tasks: 
+    - name: Update Chrony package
+      yum:
+        name: chrony
+        state: latest
+
+#    - name: Add ntp service to a firewall
+#      firewalld:
+#        service: ntp
+#        state: enabled
+#        permanent: yes
+#        immediate: yes
+
+    - name: Edit IP range in a config file
+      lineinfile:
+        path: "/etc/chrony.conf"
+        regexp: '^#allow'
+        line: 'allow 192.168.35.0/24'
+
+    - name: Edit local stratum in a config file
+      lineinfile:
+        path: "/etc/chrony.conf"
+        regexp: '^#local'
+        line: 'local stratum 10'        
+
+    - name: Restart the service
+      service:
+        name: chronyd
+        state: restarted
+
+- name: "Setting up chrony client"
+  hosts:  ns, ftp, nfs, db, webservers, lb, nagios, ldap, jenkins, kube_master, kube_worker
+  become: yes
+  tasks:
+    - name: Update chrony package
+      yum:
+        name: chrony
+        state: latest
+
+    - name: Comment out server lines
+      lineinfile:
+        path: "/etc/chrony.conf"
+        regexp: '^server'
+        state: absent
+
+    - name: add ntp server ip
+      lineinfile: 
+        path: "/etc/chrony.conf"
+        line: '"server 192.168.35.32 iburst","server 192.168.35.32 iburst"'
+
+    - name: Restart the service
+      service: 
+        name: chronyd
+        state: restarted   

@@ -1,0 +1,6 @@
+---
+- name: Installing Mariadb database with GUI
+  hosts: db
+  become: yes
+  roles: 
+    - /home/ansible/Ansible/roles/mysql
